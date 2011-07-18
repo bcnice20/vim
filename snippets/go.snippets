@@ -1,0 +1,25 @@
+
+snippet p
+	package ${1:nameofpackage}
+
+snippet pm
+	package main${1}
+
+snippet im
+	import (
+		"${1}"
+		"${2}"
+		"${3}"
+	)${4}
+
+snippet main
+	func main() {
+		${1:code}
+	}${2}
+
+snippet print
+	fmt.Println("${1}")
+
+snippet for
+	for ${1:condition}${1/(.+)/ /}{
+	${0:// body}
