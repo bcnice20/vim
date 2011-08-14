@@ -2,11 +2,12 @@ set nocompatible
 set hidden
 
 syntax on
-colorscheme blazer
+colorscheme herald
 set background=dark
 
 filetype plugin on
 filetype plugin indent on
+
 set ofu=syntaxcomplete#Complete
 let Omnifunc_GlobalScopeSearch   = 1
 let Omnifunc_DisplayMode         = 1
@@ -15,15 +16,8 @@ let Omnifunc_ShowAccess          = 1 "show access in pop-up
 let Omnifunc_SelectFirstItem     = 1 "select first item in pop-up
 set completeopt=menuone,menu,longest
 
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-inoremap <expr> <C-n> pumvisible() ? '<C-n>' :
-  \ '<C-n><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-
-inoremap <expr> <M-,> pumvisible() ? '<C-n>' :
-  \ '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-
-let mapleader = ","
-let g:mapleader = ","
+let mapleader = "'"
+nnoremap ; :
 
 " Fast saving
 nmap <leader>w :w!<cr>
@@ -31,11 +25,7 @@ nmap <leader>w :w!<cr>
 " Fast editing of the .vimrc
 map <leader>e :e! ~/.vimrc<cr>
 
-nmap <leader>o <C-x><C-o><cr>
-command! FR set filetype=ruby
-
 set gfn=Monospace\ bold\ 12
-set guioptions-=m
 set guioptions-=T
 set guioptions-=r
 set nobackup
@@ -44,7 +34,6 @@ set history=1000
 set undolevels=1000
 set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
-map Q gq
 
 set mouse=a
 set cmdheight=2
@@ -83,19 +72,25 @@ set smarttab      " insert tabs on the start of a line according to
 set hlsearch      " highlight search terms
 set incsearch     " show search matches as you type
 
+map<leader>s :shell<CR>
+
+"""Python stuff"""
+let python_highlight_all = 1
+let ruby_highlight_all = 1
 
 """Fuzzy Finder"""
-nmap ff :FufFile<CR> 
-nmap fb :FufBuffer<CR>
-nmap fd :FufDir<CR>
-nmap fl :FufLine<CR>
+map <leader>ff :FufFile<CR> 
+map <leader>fb :FufBuffer<CR>
+map <leader>fd :FufDir<CR>
+map <leader>fl :FufLine<CR>
+
+"""Fuzzy Textmate"""
+map <leader>t :FuzzyFinderTextMate<CR>
 
 """"NerdTree""""
 nmap nt :NERDTreeToggle<CR>
 
-let g:BASH_AuthorName ='Brad Carter'
-let g:BASH_Email ='bcnice20@gmail.com'
-let g:BASH_Company ='thebcblends'
+nmap <leader>md :%!Markdown.pl --html5tags <cr>
 
 " Really useful!
 "  In visual mode when you press * or # to search for the current selection
@@ -105,11 +100,6 @@ vnoremap <silent> # :call VisualSearch('b')<CR>
 " When you press gv you vimgrep after the selected text
 vnoremap <silent> gv :call VisualSearch('gv')<CR>
 map <leader>g :vimgrep // **/*.<left><left><left><left><left><left><left>
-
-cno $h e ~/
-cno $d e ~/Desktop/
-cno $j e ./
-cno $c e <C-\>eCurrentFileDir("e")<cr>
 
 " Tab configuration
 map tn :tabnew<cr>
@@ -140,8 +130,3 @@ set statusline+=%= " right align
 set statusline+=%-10.(%l,%c%V%)\ \%L\ %<%P " offset
 "}}}
 
-" omnicompletion menu colors
-hi Pmenu cterm=none ctermfg=Green ctermbg=none
-hi PmenuSel cterm=underline ctermfg=White ctermbg=none
-hi PmenuSbar cterm=bold ctermfg=none ctermbg=DarkBlue
-hi PmenuThumb cterm=bold ctermfg=none ctermbg=White

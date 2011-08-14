@@ -1,0 +1,20 @@
+snippet ifelse
+	if(${1:condition}) then(
+		${2:code}
+	) else (
+		${3:code}
+	)${4}
+snippet list
+	${1:name} := list(${2:contents})${3}
+snippet elist
+	${1:name} := List clone${2}
+snippet repeat
+	${1:# of times to repeat} repeat(${2:code})${3}
+snippet for
+	for(${1:var}, ${2:begin}, ${3:end},
+	${4:code}
+	)${5}
+snippet slice
+	${1:var} slice(${2:start}, ${3:end})${4}
+
+

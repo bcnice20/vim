@@ -1,0 +1,29 @@
+snippet script
+	#!/bin/sh
+	exec scala $0 S@
+	!#
+
+	${1:make-code!}
+snippet while
+	while (${1:var} ${2:operator} ${3:comparison}) {
+		${4:code}
+	}${5}
+snippet class
+	class ${1:name}(${2:args(optional)}) {
+		${3:code}
+	}
+snippet p
+	println (${1})${2}
+snippet list
+	val ${1:name} = List(${2:contents})${3}
+snippet fe
+	${1:var}.foreach(${2:var} => ${3:code})${4}
+snippet if
+	if (${1:var} ${2:operator} ${3}) {
+		${4:code}
+	}${5}
+snippet for
+	for(${1} <- ${2}) {
+		${3:code}
+	}
+snippet

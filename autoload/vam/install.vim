@@ -61,9 +61,7 @@ fun! vam#install#ReplaceAndFetchUrls(list)
     if exists('t')
       let dic = vam#ReadAddonInfo(t)
       if !has_key(dic,'name') || !has_key(dic, 'repository')
-        echohl ErrorMsg
-        echom n." is no valid addon-info file. It must contain both keys: name and repository"
-        echohl None
+        call vam#Log( n." is no valid addon-info file. It must contain both keys: name and repository")
         continue
       endif
       let s:c['plugin_sources'][dic['name']] = dic['repository']
@@ -100,14 +98,13 @@ fun! vam#install#Install(toBeInstalledList, ...)
       if exists('repository')
         echom 'Name '.name.' expanded to :'.string(repository)
       else
-        echohl ErrorMsg
-        echom "No repository location info known for plugin ".name."! (typo?)"
-        echohl None
+        call vam#Log( "No repository location info known for plugin ".name."! (typo?)")
         continue " due to abort this won't take place ?
       endif
     endif
 
     let confirmed = 0
+    let origin = get(repository,'type','').' '.get(repository,'url','')
 
     " tell user about target directory. Some users don't get it the first time..
     let pluginDir = vam#PluginDirByName(name)
@@ -118,7 +115,8 @@ fun! vam#install#Install(toBeInstalledList, ...)
       echom "!> Deprecation warning package ".name. ":"
       echom d
       " even for auto_install make user confirm the deprecation case
-      if s:confirm('Plugin '.name.' is deprecated, see warning above. Install it?', 1)
+      if  !vam#Log('origin: '.origin ,"None")
+          \ && s:confirm('Plugin '.name.' is deprecated, see warning above. Install it?', 1)
         let confirmed = 1
       else
         continue
@@ -127,7 +125,10 @@ fun! vam#install#Install(toBeInstalledList, ...)
 
     " ask user for to confirm installation unless he set auto_install
 
-    if auto_install || confirmed || s:confirm("Install plugin `".name."'?")
+    if auto_install 
+        \ || confirmed 
+        \ || (!vam#Log('origin: '.origin ,"None")
+              \ && s:confirm("Install plugin `".name."'?"))
 
       let infoFile = vam#AddonInfoFile(name)
       call vam#install#Checkout(pluginDir, repository)
@@ -162,9 +163,7 @@ fun! vam#install#UpdateAddon(name)
       return 1
     endif
   catch /.*/
-    echohl ErrorMsg
-    echom v:exception
-    echohl None
+    call vam#Log( v:exception)
     return 0
   endtry
 
@@ -174,12 +173,24 @@ fun! vam#install#UpdateAddon(name)
   call vam#install#LoadKnownRepos({})
   let repository = get(s:c['plugin_sources'], a:name, {})
   if empty(repository)
-    echohl WarningMsg
-    echom "Don't know how to update ".a:name." because it is (no longer?) contained in plugin_sources"
-    echohl None
+    call vam#Log( "Don't know how to update ".a:name." because it is (no longer?) contained in plugin_sources")
     return 0
   endif
   let newVersion = get(repository,'version','?')
+
+
+  if a:name == 'vim-addon-manager'
+    " load utils before the file is moved below
+    runtime autoload/vam/util.vim
+  endif
+
+  if get(repository, 'type', '') != 'archive'
+    call vam#Log( "Not updating ".a:name." because the repository description suggests using VCS ".get(repository,'type','unkown').'.'
+          \ ."\n Your install seems to be of type archive/manual/www.vim.org/unkown."
+          \ ."\n If you want to udpate ".a:name." remove ".pluginDir." and let VAM check it out again."
+          \ )
+    return 0
+  endif
 
   let versionFile = pluginDir.'/version'
   let oldVersion = filereadable(versionFile) ? readfile(versionFile, 1)[0] : "?"
@@ -208,9 +219,7 @@ fun! vam#install#UpdateAddon(name)
       let archiveName = vam#install#ArchiveNameFromDict(repository)
       let archiveFileBackup = pluginDirBackup.'/archive/'.archiveName
       if !filereadable(archiveFileBackup)
-        echohl WarningMsg
-        echom "Old archive file ".archiveFileBackup." is gone, can't try to create diff."
-        echohl None
+        call vam#Log( "Old archive file ".archiveFileBackup." is gone, can't try to create diff.")
       else
         let archiveFile = pluginDir.'/archive/'.archiveName
         call mkdir(pluginDir.'/archive','p')
@@ -246,14 +255,10 @@ fun! vam#install#UpdateAddon(name)
           let patch_failure = 0
         catch /.*/
           let patch_failure = 1
-          echohl ErrorMsg
-          echom "Failed applying patch ".diff_file." kept old dir in ".pluginDirBackup
-          echohl None
+          call vam#Log( "Failed applying patch ".diff_file." kept old dir in ".pluginDirBackup)
         endtry
       else
-        echohl ErrorMsg
-        echom "Failed trying to apply diff. patch exectubale not found"
-        echohl None
+        call vam#Log( "Failed trying to apply diff. patch exectubale not found")
         let patch_failure = 1
       endif
     endif
@@ -263,9 +268,7 @@ fun! vam#install#UpdateAddon(name)
       call vam#utils#RmFR(pluginDirBackup)
     endif
   else
-    echohl WarningMsg
-    echom "Not updating plugin ".a:name." because there is no version according to version key"
-    echohl None
+    call vam#Log( "Not updating plugin ".a:name." because there is no version according to version key")
   endif
   return 1
 endf
@@ -289,9 +292,7 @@ fun! vam#install#Update(list)
     endif
   endfor
   if !empty(failed)
-    echohl ErrorMsg
-    echom "Failed updating plugins: ".string(failed)."."
-    echohl None
+    call vam#Log( "Failed updating plugins: ".string(failed).".")
   endif
 endf
 
@@ -391,11 +392,11 @@ endf
 " may throw EXCEPTION_UNPACK
 fun! vam#install#Checkout(targetDir, repository) abort
   if get(a:repository, 'script-type') is 'patch'
-    echohl WarningMsg
-    echom "This plugin requires patching and recompiling vim."
-    echom "VAM could not do this, so you have to apply patch"
-    echom "manually."
-    echohl None
+    call vam#Log(
+          \ "This plugin requires patching and recompiling vim.\n"
+          \ ."VAM could not do this, so you have to apply patch\n"
+          \ ."manually."
+          \ )
   endif
   if get(a:repository,'type','') =~ 'git\|hg\|svn\|bzr'
     call vcs_checkouts#Checkout(a:targetDir, a:repository)

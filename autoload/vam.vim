@@ -46,6 +46,12 @@ let s:c['known'] = get(s:c,'known','vim-addon-manager-known-repositories')
 let s:c['change_to_unix_ff'] = get(s:c, 'change_to_unix_ff', (g:os=~#'unix'))
 let s:c['do_diff'] = get(s:c, 'do_diff', 1)
 
+" for testing it is necessary to avoid the "Press enter to continue lines"
+" (cygwin?). Thus provide an option making all shell commands silent
+" However don't set this to 1 by default. If something goes wrong I want users
+" to see what went wrong. Not everybody knows how to debug VimL!
+let s:c['silent_shell_commands'] = get(s:c,'silent_shell_commands', 0)
+
 if g:is_win
   " if binary-utils path exists then add it to PATH
   let s:c['binary_utils'] = get(s:c,'binary_utils',s:c['plugin_root_dir'].'\binary-utils')
@@ -83,9 +89,7 @@ fun! vam#ReadAddonInfo(path)
       " using eval is now safe!
       return eval(body)
   else
-    echohl ErrorMsg
-    echom "Invalid JSON in ".a:path."!"
-    echohl None
+    call vam#Log( "Invalid JSON in ".a:path."!")
     return {}
   endif
 
@@ -273,6 +277,16 @@ fun! vam#AddonInfoFile(name)
   endfor
   return default
 endf
+
+" looks like an error but is not. Catches users attention. Logs to :messages
+fun! vam#Log(s, ...)
+  let hi = a:0 > 0 ? a:1 : 'WarningMsg'
+  exec 'echohl '. hi
+  for l in split(a:s, "\n")
+    exec 'echomsg '.string(l)
+  endfor
+  echohl None
+endfun
 
 " If you want these commands witohut activating plugins call
 " vam#ActivateAddons([]) with empty list. Not moving them into plugin/vam.vim

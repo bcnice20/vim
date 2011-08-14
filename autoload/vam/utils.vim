@@ -1,3 +1,6 @@
+" vam#DefineAndBind('s:c','g:vim_addon_manager','{}')
+if !exists('g:vim_addon_manager') | let g:vim_addon_manager = {} | endif | let s:c = g:vim_addon_manager
+
 " let users override curl command. Reuse netrw setting
 let s:curl = exists('g:netrw_http_cmd') ? g:netrw_http_cmd : 'curl -o'
 
@@ -6,7 +9,7 @@ let s:curl = exists('g:netrw_http_cmd') ? g:netrw_http_cmd : 'curl -o'
 "
 " the / \ annoyance of Windows is fixed by calling expand which replaces / by
 " \ on Windows. This only happens by the $p substitution
-fun! vam#utils#ShellDSL(cmd, ...)
+fun! vam#utils#ShellDSL(cmd, ...) abort
   let list = copy(a:000)
   let r = ''
   let l = split(a:cmd, '\V$', 1)
@@ -22,11 +25,20 @@ fun! vam#utils#ShellDSL(cmd, ...)
   return r
 endf
 
+fun! s:Cmd(expect_code_0, cmd) abort
+  call vam#Log(a:cmd, "None")
+  exe (s:c.silent_shell_commands ?  "silent " : "").'!'. a:cmd
+  if a:expect_code_0 && v:shell_error != 0
+    let s:c.last_shell_command = a:cmd
+    throw "error executing ". a:cmd
+  endif
+  return v:shell_error
+endf
+
 " TODO improve this and move somewhere else?
-fun! vam#utils#RunShell(...)
-  execute "silent !".call('vam#utils#ShellDSL', a:000)
-  redraw
-  return !v:shell_error
+fun! vam#utils#RunShell(...) abort
+  let cmd = call('vam#utils#ShellDSL', a:000)
+  return s:Cmd(0,cmd)
 endf
 
 " cmds = list of {'d':  dir to run command in, 'c': the command line to be run }
@@ -41,10 +53,7 @@ fun! vam#utils#ExecInDir(cmds) abort
           exec "lcd ".fnameescape(c.d)
         endif
         if has_key(c, "c")
-          exec 'silent !'.c.c
-        endif
-        if v:shell_error != 0
-          throw "error executing ".c.c
+          call s:Cmd(c.c)
         endif
       endfor
     finally
@@ -61,10 +70,7 @@ fun! vam#utils#ExecInDir(cmds) abort
         call add(cmds_str, c.c)
       endif
     endfor
-    exec 'silent !'.join(cmds_str," && ")
-    if v:shell_error != 0
-      throw "error executing ".string(cmds_str)
-    endif
+    call s:Cmd(1, join(cmds_str," && "))
   endif
 endf
 let s:exec_in_dir=function('vam#utils#ExecInDir')
